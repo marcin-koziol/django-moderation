@@ -29,7 +29,9 @@ reject_objects.short_description = "Reject selected moderated objects"
 
 
 def set_objects_as_pending(modeladmin, request, queryset):
-    queryset.update(moderation_status=MODERATION_STATUS_PENDING)
+    for obj in queryset:
+        obj.set_as_pending(moderated_by=request.user)
+#    queryset.update(moderation_status=MODERATION_STATUS_PENDING)
 
 set_objects_as_pending.short_description = "Set selected moderated objects "\
                                            "as Pending"

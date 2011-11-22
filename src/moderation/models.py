@@ -162,7 +162,12 @@ class ModeratedObject(models.Model):
             self.changed_object.save()
 
         else:
+#            if self.moderator.visibility_column:
+#                setattr(self.changed_object, self.moderator.visibility_column,
+#                        False)
             self.save()
+#            if not (status == MODERATION_STATUS_PENDING and self.moderator.visible_until_rejected):
+#                self.changed_object.save()
         if status == MODERATION_STATUS_REJECTED and \
         self.moderator.visible_until_rejected:
             self.changed_object.save()
@@ -203,3 +208,14 @@ class ModeratedObject(models.Model):
         post_moderation.send(sender=self.content_object.__class__,
                             instance=self.content_object,
                             status=MODERATION_STATUS_REJECTED)
+
+    def set_as_pending(self, moderated_by=None, reason=None):
+        pre_moderation.send(sender=self.content_object.__class__,
+                            instance=self.changed_object,
+                            status=MODERATION_STATUS_PENDING)
+
+        self._moderate(MODERATION_STATUS_PENDING, moderated_by, reason)
+
+        post_moderation.send(sender=self.content_object.__class__,
+                            instance=self.content_object,
+                            status=MODERATION_STATUS_PENDING)
