@@ -41,10 +41,14 @@ class ModerationAdmin(admin.ModelAdmin):
     admin_integration_enabled = True
     
     def get_form(self, request, obj=None, **kwargs):
+        defaults = {}
         if obj and self.admin_integration_enabled:
-            return self.get_moderated_object_form(obj.__class__)
-        
-        return super(ModerationAdmin, self).get_form(request, obj, **kwargs)
+            form = self.get_moderated_object_form(obj.__class__)
+            defaults.update({
+                'form': form
+            })
+        defaults.update(kwargs)
+        return super(ModerationAdmin, self).get_form(request, obj, **defaults)
 
     def change_view(self, request, object_id, extra_context=None):
         if self.admin_integration_enabled:
