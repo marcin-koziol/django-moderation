@@ -2,13 +2,13 @@ from django.contrib import admin
 from django.forms.models import ModelForm
 from django.contrib.contenttypes.models import ContentType
 from django.core import urlresolvers
+from django.utils.translation import ugettext, ugettext_lazy as _
 import django
 
 from moderation.models import ModeratedObject, MODERATION_DRAFT_STATE,\
     MODERATION_STATUS_PENDING, MODERATION_STATUS_REJECTED,\
     MODERATION_STATUS_APPROVED
 
-from django.utils.translation import ugettext as _
 from moderation.forms import BaseModeratedObjectForm
 from moderation.helpers import automoderate
 from moderation.diff import get_changes_between_models
@@ -18,14 +18,14 @@ def approve_objects(modeladmin, request, queryset):
     for obj in queryset:
         obj.approve(moderated_by=request.user)
 
-approve_objects.short_description = "Approve selected moderated objects"
+approve_objects.short_description = _("Approve selected moderated objects")
 
 
 def reject_objects(modeladmin, request, queryset):
     for obj in queryset:
         obj.reject(moderated_by=request.user)
 
-reject_objects.short_description = "Reject selected moderated objects"
+reject_objects.short_description = _("Reject selected moderated objects")
 
 
 def set_objects_as_pending(modeladmin, request, queryset):
@@ -33,8 +33,8 @@ def set_objects_as_pending(modeladmin, request, queryset):
         obj.set_as_pending(moderated_by=request.user)
 #    queryset.update(moderation_status=MODERATION_STATUS_PENDING)
 
-set_objects_as_pending.short_description = "Set selected moderated objects "\
-                                           "as Pending"
+set_objects_as_pending.short_description = _("Set selected moderated objects "\
+                                           "as Pending")
 
 
 class ModerationAdmin(admin.ModelAdmin):
@@ -48,7 +48,7 @@ class ModerationAdmin(admin.ModelAdmin):
                 'form': form
             })
         defaults.update(kwargs)
-        return super(ModerationAdmin, self).get_form(request, obj, **defaults)
+        return super(ModerationAdmin, self).get_form(request, obj, **defaults )
 
     def change_view(self, request, object_id, extra_context=None):
         if self.admin_integration_enabled:
@@ -111,7 +111,7 @@ class ModeratedObjectAdmin(admin.ModelAdmin):
     change_list_template = 'moderation/moderated_objects_list.html'
     actions = [reject_objects, approve_objects, set_objects_as_pending]
     fieldsets = (
-        ('Object moderation', {'fields': ('moderation_reason',)}),
+        (_('Object moderation'), {'fields': ('moderation_reason',)}),
         )
 
     def get_actions(self, request):

@@ -6,6 +6,7 @@ from django.db.models import base
 from django.db.models.fields import BooleanField
 from django.db.models.manager import Manager
 from django.template.loader import render_to_string
+from django.utils.translation import ugettext, ugettext_lazy as _
 from django.conf import settings
 
 from moderation.managers import ModerationObjectsManager
@@ -62,11 +63,11 @@ class GenericModerator(object):
         '''
         if self.auto_approve_for_groups \
            and self._check_user_in_groups(user, self.auto_approve_for_groups):
-            return self.reason(u'Auto-approved: User in allowed group')
+            return self.reason(_(u'Auto-approved: User in allowed group'))
         if self.auto_approve_for_superusers and user.is_superuser:
-            return self.reason(u'Auto-approved: Superuser')
+            return self.reason(_(u'Auto-approved: Superuser'))
         if self.auto_approve_for_staff and user.is_staff:
-            return self.reason(u'Auto-approved: Staff')
+            return self.reason(_(u'Auto-approved: Staff'))
 
         return False
 
@@ -80,9 +81,9 @@ class GenericModerator(object):
         '''
         if self.auto_reject_for_groups \
          and self._check_user_in_groups(user, self.auto_reject_for_groups):
-            return self.reason(u'Auto-rejected: User in disallowed group')
+            return self.reason(_(u'Auto-rejected: User in disallowed group'))
         if self.auto_reject_for_anonymous and user.is_anonymous():
-            return self.reason(u'Auto-rejected: Anonymous User')
+            return self.reason(_(u'Auto-rejected: Anonymous User'))
 
         return False
     

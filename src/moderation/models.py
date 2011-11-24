@@ -2,6 +2,7 @@ from django.conf import settings
 from django.contrib.auth.models import User
 from django.contrib.contenttypes import generic
 from django.contrib.contenttypes.models import ContentType
+from django.utils.translation import ugettext, ugettext_lazy as _
 from django.db import models
 
 
@@ -29,9 +30,9 @@ MODERATION_STATES = (
                      )
 
 STATUS_CHOICES = (
-    (MODERATION_STATUS_APPROVED, "Approved"),
-    (MODERATION_STATUS_PENDING, "Pending"),
-    (MODERATION_STATUS_REJECTED, "Rejected"),
+    (MODERATION_STATUS_APPROVED, _("Approved")),
+    (MODERATION_STATUS_PENDING, _("Pending")),
+    (MODERATION_STATUS_REJECTED, _("Rejected")),
 )
 
 
@@ -42,18 +43,18 @@ class ModeratedObject(models.Model):
                                             editable=False)
     content_object = generic.GenericForeignKey(ct_field="content_type",
                                                fk_field="object_pk")
-    date_created = models.DateTimeField(auto_now_add=True, editable=False)
+    date_created = models.DateTimeField(auto_now_add=True, editable=False, verbose_name=_("date created"))
     moderation_state = models.SmallIntegerField(choices=MODERATION_STATES,
                                                default=MODERATION_READY_STATE,
                                                editable=False)
     moderation_status = models.SmallIntegerField(choices=STATUS_CHOICES,
                                             default=MODERATION_STATUS_PENDING,
-                                                 editable=False)
+                                                 editable=False, verbose_name=_("moderation status"))
     moderated_by = models.ForeignKey(User, blank=True, null=True, 
-                            editable=False, related_name='moderated_by_set')
+                            editable=False, related_name='moderated_by_set', verbose_name=_("moderated by"))
     moderation_date = models.DateTimeField(editable=False, blank=True, 
-                                           null=True)
-    moderation_reason = models.TextField(blank=True, null=True)
+                                           null=True, verbose_name=_("moderation date"))
+    moderation_reason = models.TextField(blank=True, null=True, verbose_name=_("moderation reason"))
     changed_object = SerializedObjectField(serialize_format='json',
                                            editable=False)
     changed_by = models.ForeignKey(User, blank=True, null=True, 
@@ -78,6 +79,8 @@ class ModeratedObject(models.Model):
 
     class Meta:
         ordering = ['moderation_status', 'date_created']
+        verbose_name = _("moderated object")
+        verbose_name_plural = _("moderated objects")
 
     def automoderate(self, user=None):
         '''Auto moderate object for given user.
@@ -141,6 +144,9 @@ class ModeratedObject(models.Model):
         self.moderation_status = status
         self.moderation_date = datetime.datetime.now()
         self.moderated_by = moderated_by
+
+        if not isinstance(reason, str):
+            reason = reason.title()
         self.moderation_reason = reason
 
         if status == MODERATION_STATUS_APPROVED:
