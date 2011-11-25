@@ -54,7 +54,7 @@ class ModerationAdmin(admin.ModelAdmin):
         if self.admin_integration_enabled:
             self.send_message(request, object_id)
 
-        return super(ModerationAdmin, self).change_view(request, object_id)
+        return super(ModerationAdmin, self).change_view(request, object_id, extra_context)
 
     def send_message(self, request, object_id):
         try:
@@ -84,7 +84,7 @@ class ModerationAdmin(admin.ModelAdmin):
                         "it will be visible if moderator accepts it")
         elif moderation_status == MODERATION_STATUS_REJECTED:
             return _(u"Object has been rejected by moderator, "\
-                    "reason: %s" % reason)
+                    "reason: %s") % reason
         elif moderation_status == MODERATION_STATUS_APPROVED:
             return _(u"Object has been approved by moderator "\
                     "and is visible on site")
