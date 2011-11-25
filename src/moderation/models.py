@@ -144,9 +144,6 @@ class ModeratedObject(models.Model):
         self.moderation_status = status
         self.moderation_date = datetime.datetime.now()
         self.moderated_by = moderated_by
-
-        if not isinstance(reason, str):
-            reason = reason.title()
         self.moderation_reason = reason
 
         if status == MODERATION_STATUS_APPROVED:
