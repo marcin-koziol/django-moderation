@@ -1,5 +1,7 @@
 from django.contrib import admin
+from django.db.models.query_utils import Q
 from django.forms.models import ModelForm
+from django.contrib.admin.filterspecs import FilterSpec, ChoicesFilterSpec
 from django.contrib.contenttypes.models import ContentType
 from django.core import urlresolvers
 from django.utils.translation import ugettext, ugettext_lazy as _
@@ -102,14 +104,39 @@ class ModerationAdmin(admin.ModelAdmin):
         return ModeratedObjectForm
 
 
+class RestrictedStatusFilterSpec(ChoicesFilterSpec):
+    def __init__(self, f, request, params, model, model_admin, field_path=None):
+        super(RestrictedStatusFilterSpec, self).__init__(f, request, params, model, model_admin, field_path)
+        self.lookup_kwarg = "moderation_status__exact"
+        self.lookup_val = request.GET.get(self.lookup_kwarg)
+        self.lookup_choices = (
+            (_("Pending"), MODERATION_STATUS_PENDING),
+            (_("Rejected"), MODERATION_STATUS_REJECTED),
+        )
+
+    def choices(self, cl):
+        yield { 'selected': self.lookup_val is None,
+                'query_string': cl.get_query_string({}, [self.lookup_kwarg]),
+                'display': _('All') }
+        for val in self.lookup_choices:
+            yield { 'selected' : str(val[1]) == self.lookup_val,
+                    'query_string': cl.get_query_string({self.lookup_kwarg: val[1]}),
+                    'display': val[0] }
+
+    def title(self):
+        return _("moderation status")
+
+FilterSpec.filter_specs.insert(0, (lambda f: getattr(f, 'restricted_status_filter', False), RestrictedStatusFilterSpec))
+
+
 class ModeratedObjectAdmin(admin.ModelAdmin):
     date_hierarchy = 'date_created'
     list_display = ('content_object', 'content_type', 'date_created', 
                     'moderation_status', 'moderated_by', 'moderation_date')
-    list_filter = ['content_type', 'moderation_status']
+    list_filter = ['moderation_status']
     change_form_template = 'moderation/moderate_object.html'
     change_list_template = 'moderation/moderated_objects_list.html'
-    actions = [reject_objects, approve_objects, set_objects_as_pending]
+    actions = [reject_objects, approve_objects]
     fieldsets = (
         (_('Object moderation'), {'fields': ('moderation_reason',)}),
         )
@@ -127,7 +154,7 @@ class ModeratedObjectAdmin(admin.ModelAdmin):
         return unicode(obj.changed_object)
 
     def queryset(self, request):
-        qs = super(ModeratedObjectAdmin, self).queryset(request)
+        qs = super(ModeratedObjectAdmin, self).queryset(request).filter(~Q(moderation_status=MODERATION_STATUS_APPROVED))
 
         return qs.exclude(moderation_state=MODERATION_DRAFT_STATE)
 
@@ -178,6 +205,8 @@ class ModeratedObjectAdmin(admin.ModelAdmin):
             object_admin_url = None
 
         extra_context = {'changes': changes,
+                         'old_object': old_object,
+                         'new_object': new_object,
                          'django_version': django.get_version()[:3],
                          'object_admin_url': object_admin_url}
         return super(ModeratedObjectAdmin, self).change_view(request,

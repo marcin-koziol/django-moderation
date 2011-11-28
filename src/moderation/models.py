@@ -50,6 +50,7 @@ class ModeratedObject(models.Model):
     moderation_status = models.SmallIntegerField(choices=STATUS_CHOICES,
                                             default=MODERATION_STATUS_PENDING,
                                                  editable=False, verbose_name=_("moderation status"))
+    moderation_status.restricted_status_filter = True
     moderated_by = models.ForeignKey(User, blank=True, null=True, 
                             editable=False, related_name='moderated_by_set', verbose_name=_("moderated by"))
     moderation_date = models.DateTimeField(editable=False, blank=True, 
