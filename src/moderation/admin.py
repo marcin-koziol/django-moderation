@@ -154,7 +154,8 @@ class ModeratedObjectAdmin(admin.ModelAdmin):
         return unicode(obj.changed_object)
 
     def queryset(self, request):
-        qs = super(ModeratedObjectAdmin, self).queryset(request).filter(~Q(moderation_status=MODERATION_STATUS_APPROVED))
+        qs = super(ModeratedObjectAdmin, self).queryset(request)
+        qs = qs.exclude(moderation_status=MODERATION_STATUS_APPROVED)
 
         return qs.exclude(moderation_state=MODERATION_DRAFT_STATE)
 
@@ -193,6 +194,7 @@ class ModeratedObjectAdmin(admin.ModelAdmin):
                 reason = admin_form.cleaned_data['moderation_reason']
                 if 'approve' in request.POST:
                     moderated_object.approve(request.user, reason)
+                    return self.response_change(request, new_object)
                 elif 'reject' in request.POST:
                     moderated_object.reject(request.user, reason)
 
