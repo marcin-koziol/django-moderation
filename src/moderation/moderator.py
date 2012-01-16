@@ -105,7 +105,7 @@ class GenericModerator(object):
             except ObjectDoesNotExist:
                 return False
             
-            if group in user.groups.all():
+            if hasattr(user, "groups") and group in user.groups.all():
                 return True
             
         return False
