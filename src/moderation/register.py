@@ -200,7 +200,7 @@ class ModerationManager(object):
             old_object = sender._default_manager.get(pk=pk)
             moderated_obj = ModeratedObject(content_object=old_object)
             moderated_obj.save()
-            if moderated_obj.changed_by and not moderator.is_auto_approve(instance, moderated_obj.changed_by):
+            if instance.author and not moderator.is_auto_approve(instance, instance.author):
                 moderator.inform_moderator(instance)
         else:
             
