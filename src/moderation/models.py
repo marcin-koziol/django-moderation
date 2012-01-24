@@ -2,10 +2,10 @@ from django.conf import settings
 from django.contrib.auth.models import User
 from django.contrib.contenttypes import generic
 from django.contrib.contenttypes.models import ContentType
-from django.utils.translation import ugettext, ugettext_lazy as _
+from django.utils.translation import ugettext as _u, ugettext_lazy as _
 from django.db import models
-
-
+from chromemarket.redundant_item import is_redundant_item
+from crx import CrxFile
 from moderation.diff import get_changes_between_models
 from moderation.fields import SerializedObjectField
 from moderation.signals import post_moderation, pre_moderation
@@ -194,6 +194,16 @@ class ModeratedObject(models.Model):
         return False
 
     def approve(self, moderated_by=None, reason=None):
+        crx = CrxFile(self.changed_object.crx)
+        try:
+            launch_url = crx.manifest["app"]["launch"]["web_url"]
+        except KeyError:
+            launch_url = None
+        if is_redundant_item(self.changed_object, appid=crx.get_appid()):
+            return self.reject(reason=_u("Private key already exists."))
+        if launch_url and is_redundant_item(self.changed_object, launch_url=launch_url):
+            return self.reject(reason=_u("Hosted application with the same URL already exists."))
+
         pre_moderation.send(sender=self.content_object.__class__,
                             instance=self.changed_object,
                             status=MODERATION_STATUS_APPROVED)
