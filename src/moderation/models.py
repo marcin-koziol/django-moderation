@@ -214,6 +214,8 @@ class ModeratedObject(models.Model):
                             instance=self.content_object,
                             status=MODERATION_STATUS_APPROVED)
 
+        return _("Item approved: %s") % reason
+
     def reject(self, moderated_by=None, reason=None):
         pre_moderation.send(sender=self.content_object.__class__,
                             instance=self.changed_object,
@@ -222,6 +224,8 @@ class ModeratedObject(models.Model):
         post_moderation.send(sender=self.content_object.__class__,
                             instance=self.content_object,
                             status=MODERATION_STATUS_REJECTED)
+
+        return _("%s rejected: %s") % (self.changed_object.name, reason)
 
     def set_as_pending(self, moderated_by=None, reason=None):
         pre_moderation.send(sender=self.content_object.__class__,

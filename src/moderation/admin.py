@@ -1,9 +1,10 @@
-from django.contrib import admin
+from django.contrib import admin, messages
 from django.db.models.query_utils import Q
 from django.forms.models import ModelForm
 from django.contrib.admin.filterspecs import FilterSpec, ChoicesFilterSpec
 from django.contrib.contenttypes.models import ContentType
 from django.core import urlresolvers
+from django.http import HttpResponseRedirect
 from django.utils.translation import ugettext, ugettext_lazy as _
 import django
 
@@ -18,14 +19,16 @@ from moderation.diff import get_changes_between_models
 
 def approve_objects(modeladmin, request, queryset):
     for obj in queryset:
-        obj.approve(moderated_by=request.user)
+        moderation_message = obj.approve(moderated_by=request.user)
+        messages.add_message(request, messages.INFO, moderation_message)
 
 approve_objects.short_description = _("Approve selected moderated objects")
 
 
 def reject_objects(modeladmin, request, queryset):
     for obj in queryset:
-        obj.reject(moderated_by=request.user)
+        moderation_message = obj.reject(moderated_by=request.user)
+        messages.add_message(request, messages.INFO, moderation_message)
 
 reject_objects.short_description = _("Reject selected moderated objects")
 
@@ -193,10 +196,12 @@ class ModeratedObjectAdmin(admin.ModelAdmin):
             if admin_form.is_valid():
                 reason = admin_form.cleaned_data['moderation_reason']
                 if 'approve' in request.POST:
-                    moderated_object.approve(request.user, reason)
+                    moderation_message = moderated_object.approve(request.user, reason)
+                    messages.add_message(request, messages.INFO, moderation_message)
                     return self.response_change(request, new_object)
                 elif 'reject' in request.POST:
-                    moderated_object.reject(request.user, reason)
+                    moderation_message = moderated_object.reject(request.user, reason)
+                    messages.add_message(request, messages.INFO, moderation_message)
 
         content_type = ContentType.objects.get_for_model(changed_object.__class__)
         try:
@@ -214,6 +219,19 @@ class ModeratedObjectAdmin(admin.ModelAdmin):
         return super(ModeratedObjectAdmin, self).change_view(request,
                                                              object_id,
                                                              extra_context)
+
+    def response_change(self, request, obj):
+        """
+        Determines the HttpResponse for the change_view stage.
+        """
+
+        # Figure out where to redirect. If the user has change permission,
+        # redirect to the change-list page for this object. Otherwise,
+        # redirect to the admin index.
+        if self.has_change_permission(request, None):
+            return HttpResponseRedirect('../')
+        else:
+            return HttpResponseRedirect('../../../')
 
 
 admin.site.register(ModeratedObject, ModeratedObjectAdmin)
