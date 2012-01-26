@@ -199,9 +199,9 @@ class ModeratedObject(models.Model):
             launch_url = crx.manifest["app"]["launch"]["web_url"]
         except KeyError:
             launch_url = None
-        if is_redundant_item(self.changed_object, appid=crx.get_appid()):
+        if is_redundant_item(self.changed_object.__class__, self.changed_object, appid=crx.get_appid()):
             return self.reject(reason=_u("Private key already exists."))
-        if launch_url and is_redundant_item(self.changed_object, launch_url=launch_url):
+        if launch_url and is_redundant_item(self.changed_object.__class__, self.changed_object, launch_url=launch_url):
             return self.reject(reason=_u("Hosted application with the same URL already exists."))
 
         pre_moderation.send(sender=self.content_object.__class__,
