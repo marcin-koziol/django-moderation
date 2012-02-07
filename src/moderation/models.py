@@ -37,23 +37,14 @@ STATUS_CHOICES = (
 
 
 class ModeratedObject(models.Model):
-    content_type = models.ForeignKey(ContentType, null=True, blank=True,
-                                     editable=False)
-    object_pk = models.PositiveIntegerField(null=True, blank=True,
-                                            editable=False)
-    content_object = generic.GenericForeignKey(ct_field="content_type",
-                                               fk_field="object_pk")
+    content_type = models.ForeignKey(ContentType, null=True, blank=True, editable=False)
+    object_pk = models.PositiveIntegerField(null=True, blank=True, editable=False)
+    content_object = generic.GenericForeignKey(ct_field="content_type", fk_field="object_pk")
     date_created = models.DateTimeField(auto_now_add=True, editable=False, verbose_name=_("date created"))
-    moderation_state = models.SmallIntegerField(choices=MODERATION_STATES,
-                                                default=MODERATION_READY_STATE,
-                                                editable=False)
-    moderation_status = models.SmallIntegerField(
-        choices=STATUS_CHOICES,
-        default=MODERATION_STATUS_PENDING,
-                                                 editable=False, verbose_name=_("moderation status"))
+    moderation_state = models.SmallIntegerField(choices=MODERATION_STATES, default=MODERATION_READY_STATE, editable=False)
+    moderation_status = models.SmallIntegerField(choices=STATUS_CHOICES, default=MODERATION_STATUS_PENDING, editable=False, verbose_name=_("moderation status"))
     moderation_status.restricted_status_filter = True
-        User, blank=True, null=True,
-                            editable=False, related_name='moderated_by_set', verbose_name=_("moderated by"))
+    moderated_by = models.ForeignKey(User, blank=True, null=True, editable=False, related_name='moderated_by_set', verbose_name=_("moderated by"))
     moderation_date = models.DateTimeField(editable=False, blank=True,
                                            null=True, verbose_name=_("moderation date"))
     moderation_reason = models.TextField(blank=True, null=True, verbose_name=_("moderation reason"))
