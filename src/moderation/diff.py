@@ -7,6 +7,7 @@ from django.db.models import fields, ForeignKey, FileField
 from django.utils.html import escape
 from django.core.urlresolvers import reverse, NoReverseMatch
 
+
 class BaseChange(object):
 
     def __repr__(self):
