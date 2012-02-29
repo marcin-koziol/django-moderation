@@ -1,7 +1,7 @@
 from setuptools import setup, find_packages
 import os
 
-version = '0.3.3custom'
+version = '0.3.4custom'
 
 setup(name='django-moderation',
       version=version,
