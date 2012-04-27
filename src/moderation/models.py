@@ -47,7 +47,7 @@ class ModeratedObject(models.Model):
     moderated_by = models.ForeignKey(User, blank=True, null=True, editable=False, related_name='moderated_by_set', verbose_name=_("moderated by"))
     moderation_date = models.DateTimeField(editable=False, blank=True,
                                            null=True, verbose_name=_("moderation date"))
-    moderation_reason = models.TextField(blank=True, null=True, verbose_name=_("moderation reason"))
+    moderation_reason = models.TextField(blank=False, null=True, verbose_name=_("moderation reason"))
     changed_object = SerializedObjectField(serialize_format='json',
                                            editable=False)
     changed_by = models.ForeignKey(
