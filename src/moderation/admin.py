@@ -12,7 +12,8 @@ from moderation.models import ModeratedObject, MODERATION_DRAFT_STATE,\
     MODERATION_STATUS_PENDING, MODERATION_STATUS_REJECTED,\
     MODERATION_STATUS_APPROVED
 
-from moderation.forms import BaseModeratedObjectForm
+from django.utils.translation import ugettext as _
+from moderation.forms import make_moderatedform_from_modelform
 from moderation.helpers import automoderate
 from moderation.diff import get_changes_between_models
 
@@ -45,7 +46,10 @@ set_objects_as_pending.short_description = _("Set selected moderated objects "\
 class ModerationAdmin(admin.ModelAdmin):
     admin_integration_enabled = True
 
-    def get_form(self, request, obj=None, **kwargs):
+    def queryset(self, request):
+        return self.model.unmoderated_objects.all()
+        
+    def get_form(self, request, obj=None):
         defaults = {}
         if obj and self.admin_integration_enabled:
             form = self.get_moderated_object_form(obj.__class__)
@@ -53,13 +57,23 @@ class ModerationAdmin(admin.ModelAdmin):
                 'form': form
             })
         defaults.update(kwargs)
-        return super(ModerationAdmin, self).get_form(request, obj, **defaults )
+        
+        superform = super(ModerationAdmin, self).get_form(request, obj)
+        if not self.admin_integration_enabled:
+            return superform
+
+        if 'history' in request.path_info.split('/')[-3]:
+            #HACK: check URL to determine if django-reversion is used
+            #Using django-reversion
+            return superform
+
+        return make_moderatedform_from_modelform(superform, obj)
 
     def change_view(self, request, object_id, extra_context=None):
         if self.admin_integration_enabled:
             self.send_message(request, object_id)
 
-        return super(ModerationAdmin, self).change_view(request, object_id, extra_context)
+        return super(ModerationAdmin, self).change_view(request, object_id, extra_context=extra_context)
 
     def send_message(self, request, object_id):
         try:
@@ -97,15 +111,7 @@ class ModerationAdmin(admin.ModelAdmin):
             return _("This object is not registered with "\
                      "the moderation system.")
 
-    def get_moderated_object_form(self, model_class):
-
-        class ModeratedObjectForm(BaseModeratedObjectForm):
-
-            class Meta:
-                model = model_class
-
-        return ModeratedObjectForm
-
+from moderation.filterspecs import RegisteredContentTypeListFilter
 
 class RestrictedStatusFilterSpec(ChoicesFilterSpec):
     def __init__(self, f, request, params, model, model_admin, field_path=None):
@@ -136,7 +142,7 @@ class ModeratedObjectAdmin(admin.ModelAdmin):
     date_hierarchy = 'date_created'
     list_display = ('content_object', 'content_type', 'date_created',
                     'moderation_status', 'moderated_by', 'moderation_date')
-    list_filter = ['moderation_status']
+    list_filter = [('content_type', RegisteredContentTypeListFilter), 'moderation_status']
     change_form_template = 'moderation/moderate_object.html'
     change_list_template = 'moderation/moderated_objects_list.html'
     actions = [reject_objects, approve_objects]
@@ -161,15 +167,6 @@ class ModeratedObjectAdmin(admin.ModelAdmin):
         qs = qs.exclude(moderation_status=MODERATION_STATUS_APPROVED)
 
         return qs.exclude(moderation_state=MODERATION_DRAFT_STATE)
-
-    def get_moderated_object_form(self, model_class):
-
-        class ModeratedObjectForm(ModelForm):
-
-            class Meta:
-                model = model_class
-
-        return ModeratedObjectForm
 
     def change_view(self, request, object_id, extra_context=None):
         from moderation import moderation
@@ -220,7 +217,7 @@ class ModeratedObjectAdmin(admin.ModelAdmin):
                          'object_admin_url': object_admin_url}
         return super(ModeratedObjectAdmin, self).change_view(request,
                                                              object_id,
-                                                             extra_context)
+                                                             extra_context=extra_context)
 
     def response_change(self, request, obj):
         """
