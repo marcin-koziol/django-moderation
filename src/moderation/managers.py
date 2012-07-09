@@ -2,8 +2,20 @@ from django.db.models.manager import Manager
 from django.contrib.contenttypes.models import ContentType
 from django.core.exceptions import ObjectDoesNotExist
 
+
+class MetaClass(type):
+
+    def __new__(cls, name, bases, attrs):
+        return super(MetaClass, cls).__new__(cls, name, bases, attrs)
+
+
 class ModerationObjectsManager(Manager):
-    """Manager for any moderated object class"""
+
+    def __call__(self, base_manager, *args, **kwargs):
+        return MetaClass(self.__class__.__name__,
+                (self.__class__, base_manager),
+                {'use_for_related_fields': True})
+
     def filter_moderated_objects(self, query_set):
         from moderation.models import MODERATION_STATUS_PENDING,\
             MODERATION_STATUS_REJECTED
@@ -20,13 +32,15 @@ class ModerationObjectsManager(Manager):
 
         full_query_set = super(ModerationObjectsManager, self).get_query_set()\
         .filter(pk__in=query_set.values_list('pk', flat=True))
+
         for obj in full_query_set:
             try:
                 # We cannot use dict.get() here!
                 mobject = mobjects[obj.pk] if obj.pk in mobjects\
                 else obj.moderated_object
-                exc = self.moderator.fields_exclude
-                obj_changed = mobject.has_object_been_changed(obj, exc)
+                # TODO: Pass a proper fields_exclude \
+                # TODO (self.moderator.fields_exclude)
+                obj_changed = mobject.has_object_been_changed(obj, [])
 
                 if mobject.moderation_status\
                    in [MODERATION_STATUS_PENDING,
@@ -34,7 +48,7 @@ class ModerationObjectsManager(Manager):
                 and not obj_changed:
                     exclude_pks.append(obj.pk)
             except ObjectDoesNotExist:
-                exclude_pks.append(obj.pk)
+                pass
 
         return query_set.exclude(pk__in=exclude_pks)
 
@@ -63,7 +77,7 @@ class ModerationObjectsManager(Manager):
 
 
 class ModeratedObjectManager(Manager):
-    """Manager for ModeratedObject, not for a moderated object"""
+
     def get_for_instance(self, instance):
         '''Returns ModeratedObject for given model instance'''
         return self.get(

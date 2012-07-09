@@ -13,12 +13,7 @@ DATABASE_USER = ''             # Not used with sqlite3.
 DATABASE_PASSWORD = ''         # Not used with sqlite3.
 DATABASE_HOST = ''             # Set to empty string for localhost. Not used with sqlite3.
 DATABASE_PORT = ''             # Set to empty string for default. Not used with sqlite3.
-DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': 'example_project.db'
-    }
-}
+
 TIME_ZONE = 'America/Chicago'
 
 LANGUAGE_CODE = 'en-us'
@@ -45,8 +40,8 @@ MIDDLEWARE_CLASSES = (
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.middleware.doc.XViewMiddleware',
-    'django.contrib.messages.middleware.MessageMiddleware',
 )
+
 ROOT_URLCONF = 'example_project.urls'
 SITE_ID = 1
 
@@ -56,7 +51,6 @@ INSTALLED_APPS = (
     'django.contrib.sessions',
     'django.contrib.admin',
     'django.contrib.sites',
-    'django.contrib.messages',
     'moderation',
     'example_project.example_app',
     #'test_extensions',
@@ -64,8 +58,8 @@ INSTALLED_APPS = (
 
 
 TEMPLATE_LOADERS = (
-    'django.template.loaders.filesystem.Loader',
-    'django.template.loaders.app_directories.Loader',
+    'django.template.loaders.filesystem.load_template_source',
+    'django.template.loaders.app_directories.load_template_source',
 )
 
 TEMPLATE_DIRS = (
@@ -73,11 +67,9 @@ TEMPLATE_DIRS = (
 )
 
 TEMPLATE_CONTEXT_PROCESSORS = (
-      'django.contrib.auth.context_processors.auth',
+      'django.core.context_processors.auth',
       'django.core.context_processors.i18n',
       'django.core.context_processors.request',
       'django.core.context_processors.media',
-      'django.core.context_processors.static',
-    'django.contrib.messages.context_processors.messages'
    )
 
