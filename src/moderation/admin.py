@@ -16,7 +16,6 @@ from django.utils.translation import ugettext as _
 from moderation.forms import make_moderatedform_from_modelform
 from moderation.helpers import automoderate
 from moderation.diff import get_changes_between_models
-from moderation.forms import BaseModeratedObjectForm
 
 
 def approve_objects(modeladmin, request, queryset):
