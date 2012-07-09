@@ -4,6 +4,7 @@ import re
 import difflib
 
 from django.db.models import fields, ForeignKey, FileField
+from django.utils.encoding import force_unicode
 from django.utils.html import escape
 from django.core.urlresolvers import reverse, NoReverseMatch
 
@@ -158,5 +159,5 @@ def get_change_for_type(verbose_name, change, field):
         change = FileChange(verbose_name, field, (value1, value2))
     else:
         value1, value2 = change
-        change = TextChange(verbose_name, field, (unicode(value1), unicode(value2)))
+        change = TextChange(verbose_name, field, (force_unicode(value1), force_unicode(value2)))
     return change
